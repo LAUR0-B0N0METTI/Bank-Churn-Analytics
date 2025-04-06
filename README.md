@@ -1,3 +1,7 @@
+Claro! Aqui está uma versão revisada e aprimorada do seu markdown, com melhor formatação, clareza técnica e uma estrutura mais refinada:
+
+---
+
 ```markdown
 # 🏦 Bank Churn Analytics Pro - Documentação Técnica
 
@@ -5,46 +9,59 @@
 ![TensorFlow](https://img.shields.io/badge/TensorFlow-FF6F00?style=for-the-badge&logo=TensorFlow&logoColor=white)
 ![Scikit-learn](https://img.shields.io/badge/scikit--learn-%23F7931E.svg?style=for-the-badge&logo=scikit-learn&logoColor=white)
 
+---
+
 ## 📌 Visão Geral do Projeto
-Sistema preditivo para análise de rotatividade de clientes bancários, combinando técnicas de machine learning tradicional (Random Forest) e redes neurais profundas para máxima acurácia preditiva.
 
-**Objetivo Principal**: Reduzir custos de retenção de clientes através de:
-- Identificação precoce de clientes propensos a cancelar serviços
+**Bank Churn Analytics Pro** é uma solução de machine learning voltada à predição de rotatividade de clientes bancários. O sistema combina modelos tradicionais (Random Forest) com redes neurais profundas para obter alta acurácia e insights interpretáveis.
+
+### 🎯 Objetivo Principal
+Reduzir a taxa de cancelamento de clientes por meio de:
+- Identificação antecipada de clientes propensos ao churn
 - Análise de padrões comportamentais críticos
-- Sugestão de ações preventivas personalizadas
+- Sugestão de ações personalizadas de retenção
 
-## 🚀 Recursos-Chave
-| Módulo | Tecnologias | Finalidade |
-|--------|-------------|------------|
-| **Análise Preditiva** | Random Forest, TensorFlow | Previsão de probabilidade de churn |
-| **Dashboard Interativo** | Streamlit, Plotly | Visualização de dados em tempo real |
-| **Processamento de Dados** | Scikit-learn, Pandas | Pipeline de ETL automatizado |
-| **Gestão de Modelos** | Joblib, Keras | Versionamento e deploy de modelos |
+---
+
+## 🚀 Principais Funcionalidades
+
+| Módulo                  | Tecnologias                 | Finalidade                               |
+|------------------------|-----------------------------|------------------------------------------|
+| **Análise Preditiva**  | Random Forest, TensorFlow   | Estimar a probabilidade de churn         |
+| **Dashboard Interativo** | Streamlit, Plotly           | Visualização em tempo real dos insights |
+| **ETL Automatizado**   | Pandas, Scikit-learn         | Limpeza e transformação dos dados        |
+| **Gestão de Modelos**  | Joblib, Keras                | Versionamento e deploy de modelos        |
+
+---
 
 ## 📂 Dataset e Origem dos Dados
 
-### Fonte Original
-Os dados utilizados neste projeto foram obtidos do **Bank Customer Churn Dataset**, um conjunto de dados público amplamente utilizado na comunidade de Machine Learning para estudos de rotatividade de clientes:
+### 📎 Fonte Original
+O conjunto de dados utilizado é o [**Bank Customer Churn Dataset**](https://www.kaggle.com/datasets/shantanudhakadd/bank-customer-churn-prediction), amplamente adotado em projetos de ML voltados para churn.
 
-[🔗 Kaggle: Bank Customer Churn Dataset](https://www.kaggle.com/datasets/shantanudhakadd/bank-customer-churn-prediction)
+### 🧾 Principais Características
 
-### Características Principais do Dataset
-| Feature | Tipo | Descrição | Transformação Aplicada |
-|---------|------|-----------|-------------------------|
-| CreditScore | Numérico | Pontuação de crédito (300-850) | Normalização z-score |
-| Geography | Categórico | País do cliente (França/Alemanha/Espanha) | One-Hot Encoding |
-| Age | Numérico | Idade do cliente | Binning estratificado |
-| Balance | Numérico | Saldo médio anual | Log-transform |
-| Exited | Binário | Indicador de churn (0/1) | Balanceamento via SMOTE |
+| Feature      | Tipo       | Descrição                              | Transformação Aplicada          |
+|--------------|------------|----------------------------------------|---------------------------------|
+| `CreditScore`| Numérico   | Pontuação de crédito (300–850)         | Normalização z-score            |
+| `Geography`  | Categórico | País do cliente                        | One-Hot Encoding                |
+| `Age`        | Numérico   | Idade do cliente                       | Binning estratificado           |
+| `Balance`    | Numérico   | Saldo médio anual                      | Log-transform                   |
+| `Exited`     | Binário    | Indicador de churn (0 = Não, 1 = Sim)  | Balanceamento via SMOTE         |
 
-### Pré-processamento Específico
+### 🔄 Exemplo de Pré-processamento
 ```python
-# Exemplo de tratamento para dados originais
+import pandas as pd
+
 df = pd.read_csv('Churn_Modelling.csv')
 df = df.rename(columns={'Exited': 'Churn'})
 df['Geography'] = df['Geography'].str.title()
+```
+
+---
 
 ## 🧠 Arquitetura do Sistema
+
 ```mermaid
 graph TD
     A[Coleta de Dados] --> B[Pré-processamento]
@@ -54,19 +71,25 @@ graph TD
     E --> F[Visualização Interativa]
 ```
 
-## 🔍 Decisões de Design Estratégicas
+---
 
-### 1. Escolha de Bibliotecas de IA
-| Biblioteca | Razão Técnica | Caso de Uso |
-|------------|---------------|-------------|
-| **Scikit-learn** | Pipeline unificado para pré-processamento | Codificação categórica, normalização |
-| **TensorFlow/Keras** | Arquitetura neural profunda customizável | Captura de padrões não-lineares complexos |
-| **Random Forest** | Interpretabilidade dos resultados | Análise de importância de features |
-| **Imbalanced-learn** | Técnicas SMOTE para dados desbalanceados | Melhoria na recall de classe minoritária |
+## 🔍 Decisões Estratégicas
 
-### 2. Estratégia de Modelagem Híbrida
+### 📚 Bibliotecas e Justificativas
+
+| Biblioteca          | Caso de Uso                          | Vantagem Técnica                               |
+|---------------------|--------------------------------------|------------------------------------------------|
+| **Scikit-learn**    | Pré-processamento                    | Pipelines robustos e integração com Pandas     |
+| **TensorFlow/Keras**| Modelagem profunda                   | Arquitetura flexível para padrões não-lineares |
+| **Random Forest**   | Modelo baseline interpretável        | Análise de importância de variáveis            |
+| **Imbalanced-learn**| Dados desbalanceados                 | SMOTE para melhorar recall                     |
+
+---
+
+### 🔀 Estratégia de Modelagem Híbrida
+
 ```python
-# Arquitetura Neural Profunda
+# Rede Neural Profunda (Keras)
 model = Sequential([
     Dense(128, activation='relu', input_shape=(input_dim,)),
     Dropout(0.3),
@@ -82,84 +105,98 @@ rf_model = RandomForestClassifier(
 )
 ```
 
-**Vantagens da Abordagem:**
-- Combina força bruta computacional (RF) com aprendizagem profunda (NN)
-- Redundância para validação cruzada de resultados
-- Balanceamento entre precisão e interpretabilidade
+**✔️ Benefícios da Abordagem Combinada:**
+- Balanceia interpretabilidade e performance
+- Redundância para validação cruzada
+- Aumenta robustez contra overfitting
 
-## 📊 Fluxo de Treinamento do Modelo
+---
 
-### 1. Pré-processamento de Dados
+## 📊 Pipeline de Treinamento
+
+### 1️⃣ Pré-processamento
 ```python
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+
 preprocessor = ColumnTransformer(
     transformers=[
         ('num', StandardScaler(), numerical_cols),
         ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_cols)
-])
+    ]
+)
 ```
 
-**Etapas Críticas:**
-1. Normalização z-score para features numéricas
-2. One-Hot Encoding robusto (handle_unknown='ignore')
-3. Amostragem estratificada para preservar distribuição de classes
+**Etapas-Chave:**
+- Normalização z-score
+- One-Hot robusto com `handle_unknown='ignore'`
+- Amostragem estratificada por classe alvo
 
-### 2. Métricas de Avaliação
-| Métrica | Random Forest | Rede Neural |
-|---------|---------------|-------------|
-| Acurácia | 87.3% | 89.1% |
-| Precisão | 83.5% | 85.2% |
-| Recall | 78.9% | 82.4% |
-| AUC-ROC | 0.91 | 0.93 |
+### 2️⃣ Avaliação de Modelos
 
-### 3. Técnicas Anti-Overfitting
-- **Para RF:** Limitação de profundidade máxima (max_depth=10)
-- **Para NN:** Dropout layers + Early Stopping
+| Métrica   | Random Forest | Neural Network |
+|-----------|---------------|----------------|
+| Acurácia  | 87.3%         | 89.1%          |
+| Precisão  | 83.5%         | 85.2%          |
+| Recall    | 78.9%         | 82.4%          |
+| AUC-ROC   | 0.91          | 0.93           |
+
+### 3️⃣ Técnicas Contra Overfitting
+- **Random Forest**: `max_depth=10`, `class_weight='balanced'`
+- **Neural Network**: Dropout, Early Stopping
 - Validação cruzada estratificada (5 folds)
-
-## 🛠️ Guia de Implementação
-
-### Requisitos Mínimos
-- CPU: 4 cores (Intel i5+ recomendado)
-- RAM: 8GB+
-- Armazenamento: 1GB livre
-
-### Instalação Completa
-```bash
-# Clone o repositório
-git clone https://github.com/seu-usuario/bank-churn-analytics.git
-
-# Ambiente virtual (Recomendado)
-python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-.\.venv\Scripts\activate  # Windows
-
-# Instalação de dependências
-pip install -r requirements.txt
-
-# Execução do sistema
-streamlit run app.py
-```
-
-## 🌐 Roadmap de Evolução
-1. **Fase 2 (Q3 2024):**
-   - Integração com APIs bancárias em tempo real
-   - Sistema de recomendação de retenção
-   - Monitoramento contínuo de desempenho dos modelos
-
-2. **Fase 3 (Q4 2024):**
-   - Adoção de modelos Transformer (BERT) para análise de feedback textual
-   - Mecanismo de auto-otimização (AutoML)
-   - Dashboard executivo para C-level
-
-## 📚 Referências Técnicas
-- [Scikit-learn Best Practices](https://scikit-learn.org/stable/modules/ensemble.html)
-- [TensorFlow Production Guidelines](https://www.tensorflow.org/guide/keras/serialization_and_saving)
-- [Imbalanced Data Handling](https://imbalanced-learn.org/stable/)
 
 ---
 
-**Licença:** MIT | **Contato:** lauro.f.bonometti@gmail.com 
-**Autor:** Lauro Bonometti  
+## 🛠️ Guia de Implementação
 
+### 💻 Requisitos Mínimos
+- CPU: 4 núcleos (Intel i5 ou superior)
+- RAM: 8GB+
+- Armazenamento: 1GB disponível
+
+### ⚙️ Instalação e Execução
+
+```bash
+# Clone do repositório
+git clone https://github.com/seu-usuario/bank-churn-analytics.git
+
+# Ambiente virtual (recomendado)
+python -m venv .venv
+source .venv/bin/activate      # Linux/Mac
+.\.venv\Scripts\activate       # Windows
+
+# Instalação das dependências
+pip install -r requirements.txt
+
+# Executar o sistema
+streamlit run app.py
 ```
 
+---
+
+## 🌐 Roadmap de Evolução
+
+### 🔜 Fase 2 – Q3 2024
+- Integração com APIs bancárias
+- Sistema de recomendações de retenção
+- Monitoramento contínuo de desempenho
+
+### 🚀 Fase 3 – Q4 2024
+- Modelos Transformers (BERT) para feedbacks textuais
+- AutoML para tuning de hiperparâmetros
+- Dashboard executivo com KPIs de churn
+
+---
+
+## 📚 Referências Técnicas
+- [Scikit-learn: Ensemble Methods](https://scikit-learn.org/stable/modules/ensemble.html)
+- [TensorFlow: Saving and Loading Models](https://www.tensorflow.org/guide/keras/serialization_and_saving)
+- [Imbalanced-learn Documentation](https://imbalanced-learn.org/stable/)
+
+---
+
+**👨‍💻 Autor:** Lauro Bonometti  
+**📄 Licença:** MIT  
+**📬 Contato:** lauro.f.bonometti@gmail.com
+```
