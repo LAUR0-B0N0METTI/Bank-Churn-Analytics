@@ -1,7 +1,3 @@
-Claro! Aqui está uma versão revisada e aprimorada do seu markdown, com melhor formatação, clareza técnica e uma estrutura mais refinada:
-
----
-
 ```markdown
 # 🏦 Bank Churn Analytics Pro - Documentação Técnica
 
