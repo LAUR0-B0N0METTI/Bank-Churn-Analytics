@@ -195,7 +195,7 @@ def set_app_style():
 # ============== FUNÇÕES DE DADOS ==============
 def load_dataset():
     try:
-        data_path = Path.home() / "Desktop" / "Projeto_Churn" / "Dados" / "churn.csv"
+        data_path = Path(__file__).parent / "churn.csv"
         df = pd.read_csv(data_path)
         
         required_columns = {
