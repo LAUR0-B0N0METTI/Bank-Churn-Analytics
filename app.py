@@ -1,8 +1,6 @@
 import streamlit as st
 import pandas as pd
-import base64
 import joblib
-import os
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
@@ -162,6 +160,7 @@ BACKGROUND_COLOR = "#121212"
 TEXT_COLOR = "#FFFFFF"
 COLOR_PALETTE = ["#00CC96", "#2A2A2A", "#6C757D", "#ADB5BD"]
 FONT_FAMILY = "Segoe UI, sans-serif"
+VALID_COUNTRIES = ['France', 'Germany', 'Spain']
 
 # ============== CONFIGURAÇÃO DE ESTILO ==============
 def set_app_style():
@@ -193,52 +192,70 @@ def set_app_style():
     st.markdown(custom_css, unsafe_allow_html=True)
 
 # ============== FUNÇÕES DE DADOS ==============
+@st.cache_data
 def load_dataset():
     try:
         data_path = Path(__file__).parent / "churn.csv"
-        df = pd.read_csv(data_path)
+        
+        df = pd.read_csv(data_path, dtype={
+            'CreditScore': 'int32',
+            'Geography': 'category',
+            'Gender': 'category',
+            'Age': 'int32',
+            'Tenure': 'int32',
+            'Balance': 'float64',
+            'NumOfProducts': 'int32',
+            'HasCrCard': 'bool',
+            'IsActiveMember': 'bool',
+            'EstimatedSalary': 'float64',
+            'Exited': 'bool'
+        })
         
         required_columns = {
-            'CustomerId', 'Surname', 'CreditScore', 'Geography',
-            'Gender', 'Age', 'Tenure', 'Balance', 'NumOfProducts',
+            'CreditScore', 'Geography', 'Gender', 'Age',
+            'Tenure', 'Balance', 'NumOfProducts',
             'HasCrCard', 'IsActiveMember', 'EstimatedSalary', 'Exited'
         }
         
-        if not required_columns.issubset(df.columns):
-            st.error("Erro: Dataset incompleto!")
+        if missing := required_columns - set(df.columns):
+            st.error(f"Colunas faltantes: {', '.join(missing)}")
             st.stop()
             
-        # Mapear países desconhecidos para 'Other'
-        valid_countries = ['France', 'Germany', 'Spain']
-        df['Geography'] = df['Geography'].where(df['Geography'].isin(valid_countries), 'Other')
+        df['Geography'] = df['Geography'].apply(
+            lambda x: x if x in VALID_COUNTRIES else 'Other'
+        )
         
         return df
     
     except Exception as e:
-        st.error(f"Falha crítica: {str(e)}")
+        st.error(f"Falha ao carregar dados: {str(e)}")
         st.stop()
 
+@st.cache_data
 def preprocess_data(df):
-    df_clean = df.drop(['CustomerId', 'Surname'], axis=1, errors='ignore')
+    df_clean = df.drop(columns=['CustomerId', 'Surname'], errors='ignore')
     
     categorical_cols = ['Geography', 'Gender']
-    numerical_cols = ['CreditScore', 'Age', 'Tenure', 'Balance',
-                     'NumOfProducts', 'HasCrCard', 'IsActiveMember', 'EstimatedSalary']
+    numerical_cols = [
+        'CreditScore', 'Age', 'Tenure', 'Balance',
+        'NumOfProducts', 'HasCrCard', 'IsActiveMember', 'EstimatedSalary'
+    ]
     
     preprocessor = ColumnTransformer(
         transformers=[
             ('num', StandardScaler(), numerical_cols),
-            ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_cols)
+            ('cat', OneHotEncoder(handle_unknown='ignore', drop='if_binary'), categorical_cols)
         ])
     
     X = df_clean.drop('Exited', axis=1)
-    y = df_clean['Exited']
+    y = df_clean['Exited'].astype(int)
     
     X_processed = preprocessor.fit_transform(X)
     
     return X_processed, y, preprocessor
 
 # ============== MODELAGEM ==============
+@st.cache_resource
 def train_models(X, y):
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y)
@@ -246,6 +263,7 @@ def train_models(X, y):
     rf_model = RandomForestClassifier(
         n_estimators=200,
         max_depth=10,
+        class_weight='balanced',
         random_state=42
     )
     rf_model.fit(X_train, y_train)
@@ -279,59 +297,90 @@ def create_inputs(lang):
         st.markdown(f"<h2 style='color:{SECONDARY_COLOR};'>🔍 {lang['inputs']['title']}</h2>", 
                     unsafe_allow_html=True)
         
-        # Seleção de País e Moeda
         selected_country = st.selectbox(
             lang['inputs']['country'],
-            options=list(COUNTRIES.keys())
-        )
-
+            options=list(COUNTRIES.keys()))
+        
         currency_code = COUNTRIES[selected_country]
         currency_symbol = CURRENCY_SYMBOLS[currency_code]
+        conversion_rate = 0.2 if currency_code != 'EUR' else 1.0
         
         inputs = {
-            'CreditScore': st.slider(lang['inputs']['credit_score'], 300, 850, 650),
-            'Age': st.slider(lang['inputs']['age'], 18, 100, 40),
-            'Tenure': st.slider(lang['inputs']['tenure'], 0, 10, 3),
-            'Balance': st.number_input(f"{lang['inputs']['balance']} ({currency_symbol})", 0.0, 10_000_000.0, 5000.0),
-            'Geography': selected_country if selected_country in ['France', 'Germany', 'Spain'] else 'Other',
-            'Gender': st.radio(lang['inputs']['gender'], ['Male', 'Female'], horizontal=True),
-            'NumOfProducts': st.selectbox(lang['inputs']['products'], [1, 2, 3, 4]),
+            'CreditScore': st.slider(
+                lang['inputs']['credit_score'],
+                300, 850, 650,
+                help=lang['metrics']['help_rf']
+            ),
+            'Age': st.slider(
+                lang['inputs']['age'],
+                18, 100, 40,
+                help="Idade deve estar entre 18-100 anos"
+            ),
+            'Tenure': st.slider(
+                lang['inputs']['tenure'],
+                0, 10, 3,
+                help="Tempo de relacionamento com o banco"
+            ),
+            'Balance': st.number_input(
+                f"{lang['inputs']['balance']} ({currency_symbol})",
+                min_value=0.0,
+                max_value=10_000_000.0,
+                value=5000.0,
+                step=100.0
+            ) * conversion_rate,
+            'Geography': selected_country if selected_country in VALID_COUNTRIES else 'Other',
+            'Gender': st.radio(
+                lang['inputs']['gender'], 
+                ['Male', 'Female'], 
+                horizontal=True
+            ),
+            'NumOfProducts': st.selectbox(
+                lang['inputs']['products'], 
+                [1, 2, 3, 4]
+            ),
             'HasCrCard': st.checkbox(lang['inputs']['card'], True),
             'IsActiveMember': st.checkbox(lang['inputs']['active'], True),
-            'EstimatedSalary': st.number_input(f"{lang['inputs']['salary']} ({currency_symbol})", 0.0, 10_000_000.0, 5000.0)
+            'EstimatedSalary': st.number_input(
+                f"{lang['inputs']['salary']} ({currency_symbol})",
+                min_value=0.0,
+                max_value=10_000_000.0,
+                value=5000.0,
+                step=100.0
+            ) * conversion_rate
         }
-    
-    return pd.DataFrame([inputs])
+        
+        return pd.DataFrame([inputs])
 
 # ============== VISUALIZAÇÕES ==============
 def create_main_chart(preprocessor, rf_model, lang):
     feature_names = [
-        name.split('__')[1]
-        .replace('Geography_', 'País: ')
-        .replace('Gender_', 'Gênero: ')
+        name.replace('Geography_', 'Country: ')
+            .replace('Gender_', 'Gender: ')
+            .replace('__', ': ')
         for name in preprocessor.get_feature_names_out()
     ]
     
-    importance_df = pd.DataFrame({
-        'Feature': feature_names,
-        'Importance': rf_model.feature_importances_
-    }).sort_values('Importance', ascending=False).head(10)
+    importance = rf_model.feature_importances_
+    max_importance = importance.max()
+    normalized_importance = 100 * (importance / max_importance)
     
     fig = px.bar(
-        importance_df,
-        x='Importance',
-        y='Feature',
-        color='Importance',
-        color_continuous_scale=COLOR_PALETTE,
-        title=f"<b>{lang['charts']['main']}</b>"
+        x=normalized_importance,
+        y=feature_names,
+        labels={'x': 'Importance (%)', 'y': 'Feature'},
+        title=f"<b>{lang['charts']['main']}</b>",
+        color=normalized_importance,
+        color_continuous_scale=COLOR_PALETTE
     )
     
     fig.update_layout(
         plot_bgcolor=BACKGROUND_COLOR,
         paper_bgcolor=BACKGROUND_COLOR,
         height=500,
+        xaxis_title="Importância Relativa (%)",
         yaxis={'categoryorder':'total ascending'},
-        font={'color': TEXT_COLOR}
+        font={'color': TEXT_COLOR},
+        uniformtext_minsize=10
     )
     return fig
 
@@ -392,11 +441,9 @@ def create_scatter_chart(df, lang):
 def main():
     set_app_style()
     
-    # Seletor de Idioma simplificado
     lang_option = st.selectbox("", options=list(LANGUAGES.keys()), index=0)
     lang = LANGUAGES[lang_option]
     
-    # Header
     st.markdown(
         f"""
         <div style="text-align:center; padding:30px; background:{PRIMARY_COLOR}; 
@@ -408,22 +455,18 @@ def main():
         unsafe_allow_html=True
     )
     
-    # Carregamento de dados
     with st.spinner('Carregando dados...'):
         df = load_dataset()
         X, y, preprocessor = preprocess_data(df)
         rf_model, keras_model = train_models(X, y)
     
-    # Inputs
     input_df = create_inputs(lang)
     
     try:
-        # Processamento
         processed_input = preprocessor.transform(input_df)
         rf_pred = rf_model.predict_proba(processed_input)[0][1]
         nn_pred = keras_model.predict(processed_input, verbose=0)[0][0]
         
-        # Resultados
         st.markdown(f"### {lang['metrics']['desc']}")
         col1, col2 = st.columns(2)
         with col1:
@@ -433,7 +476,6 @@ def main():
             st.metric(lang['metrics']['nn'], f"{nn_pred*100:.1f}%",
                      help=lang['metrics']['help_nn'])
         
-        # Texto explicativo
         st.markdown(f"""
             <div style='background:{PRIMARY_COLOR}; padding:20px; border-radius:10px; margin:20px 0;'>
                 <h4 style='color:{SECONDARY_COLOR};'>📌 {lang['help']['risk1']}</h4>
@@ -441,7 +483,6 @@ def main():
             </div>
         """, unsafe_allow_html=True)
         
-        # Gráficos
         tab1, tab2, tab3, tab4 = st.tabs([
             lang['charts']['main'],
             lang['charts']['age'],
@@ -451,13 +492,10 @@ def main():
         
         with tab1:
             st.plotly_chart(create_main_chart(preprocessor, rf_model, lang), use_container_width=True)
-        
         with tab2:
             st.plotly_chart(create_age_chart(df, lang), use_container_width=True)
-        
         with tab3:
             st.plotly_chart(create_corr_chart(df, lang), use_container_width=True)
-            
         with tab4:
             st.plotly_chart(create_scatter_chart(df, lang), use_container_width=True)
         
